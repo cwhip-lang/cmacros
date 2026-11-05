@@ -33,7 +33,7 @@ comments, not Cwhip `#` comments. See [Language reference](LANGUAGE.md).
 
 [`examples/original-passing/`](../examples/original-passing) contains all
 **16** `.txt` files from
-[`chucktilbury/macros`, `tests/passing`](https://github.com/chucktilbury/macros/tree/c777e0f7f3a60591ee599d093b63c18d3e05c145/tests/passing)
+[`cwhip-lang/macros`, `tests/passing`](https://github.com/cwhip-lang/macros/tree/c777e0f7f3a60591ee599d093b63c18d3e05c145/tests/passing)
 at commit `c777e0f7f3a60591ee599d093b63c18d3e05c145`. They are copied
 byte-for-byte, including the import/support files. The upstream MIT license
 and its 2025 Charles Tilbury attribution are retained in
