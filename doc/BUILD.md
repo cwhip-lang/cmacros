@@ -21,7 +21,7 @@ reinstall an updated Cwhip SDK at the prefix named
 in the configuration error, or point `CWHIP_SDK` at an updated installation,
 then rerun configuration. cmacros rejects the selected older SDK rather than
 silently falling back or skipping application defaults. The migration depends
-on [chucktilbury/cwhip#25](https://github.com/chucktilbury/cwhip/pull/25) and the numeric SDK
+on [cwhip-lang/cwhip#25](https://github.com/cwhip-lang/cwhip/pull/25) and the numeric SDK
 migration; rebuild the SDK and its native packages together. Any rebuilt package
 manifest must declare `sdk-abi = "numeric-v2"` under `[package]`. cmacros itself
 is an application and does not publish an SDK package manifest.

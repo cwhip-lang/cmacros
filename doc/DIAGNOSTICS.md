@@ -14,7 +14,7 @@ use status 1; success, help, and version use status 0. No ANSI color is
 required.
 
 The code ranges follow the
-[canonical Cwhip diagnostic contract](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md):
+[canonical Cwhip diagnostic contract](https://github.com/cwhip-lang/cwhip/blob/master/doc/DIAGNOSTICS.md):
 0001-0999 usage/startup, 1000-1999 source or language errors, 2000-2999
 resources and configuration, 3000-3999 subprocess/transport, and 9000-9999
 unexpected or cleanup failures. `cmacros` currently uses:
