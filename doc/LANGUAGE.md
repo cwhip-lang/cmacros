@@ -37,9 +37,12 @@ guards around define/undef control that stickiness.
 
 Use `@NAME` to expand an object-like macro and `@NAME(arguments)` to expand a
 parameterized macro. A zero-parameter definition may be referenced with or
-without `()`. Arguments are comma-separated; nested parentheses, brackets,
-braces, and quoted strings protect commas. The number of arguments must match
-the definition. Empty arguments can be written as `""`.
+without `()`. A command-line `-D` definition is that zero-parameter form,
+not an object-like macro with no parameter list. See
+[Command-line usage](USAGE.md). Arguments are comma-separated; nested
+parentheses, brackets, braces, and quoted strings protect commas. The number
+of arguments must match the definition. Empty arguments can be written as
+`""`.
 
 Quoted arguments have their surrounding quotes removed and common C escapes
 decoded (`\\`, `\"`, `\'`, `\n`, `\r`, `\t`, `\b`, `\f`, `\v`, `\a`, `\e`,
@@ -62,10 +65,12 @@ Macro calls are expanded recursively and detected cycles are errors.
 ```
 
 Both directives insert and process another UTF-8 source file at that point.
-If the requested path is relative, it is searched first relative to the file
-containing the directive, then in `-I` directories, then in directories from
-`MACRO_PATH`. The environment variable and `-I` use colon-separated
-directories. If an exact candidate is absent, a `.txt` suffix is tried.
+If the requested path is relative, directories are searched in order: the
+directory containing the directive, then each `-I` directory, then each
+directory from `MACRO_PATH`. In one directory the exact path is tried, then
+that path with `.txt` appended, before the next directory is considered. A
+`shared.txt` beside the importer is chosen over an exact `shared` later on
+the path. The environment variable and `-I` use colon-separated directories.
 Search order is stable; the current directory as an independent search path,
 the shell `PATH`, and recursive directory scans are not used. The positional
 CLI input uses that same suffix when the given path cannot be resolved; see
@@ -92,11 +97,14 @@ Conditional operands follow this matrix:
 | `@NAME` / `@NAME(args)` | true when `NAME` is defined and its expansion is nonempty after trimming leading and trailing ASCII whitespace |
 | `NAME == OTHER` / `!=` | true when both names have the same definedness |
 | `@A == @B` / `!=` | compares trimmed expansions; if both sides are decimal integers, compares those digit strings |
-| mixed `@` and bare name in one comparison | hard error |
+| `@NAME == 2` | compares the trimmed expansion with the value |
+| bare name against a number or other value, such as `PLATFORM == 2` | hard error `CMACRO1009`, `cannot mix bare names and value operands in a comparison` |
+| mixed `@` and bare name in one comparison | hard error `CMACRO1009`, `cannot mix @ and bare names in a comparison` |
 
-ASCII whitespace here is space, tab, and the bytes from vertical tab through
-carriage return. A replacement of only that whitespace is true as a bare name
-and false as `@NAME`.
+ASCII whitespace here is the space character and the bytes from tab through
+carriage return: tab, line feed, vertical tab, form feed, and carriage
+return. A replacement of only that whitespace, including one that is only
+newlines, trims to empty. It is true as a bare name and false as `@NAME`.
 
 Decimal integer literals use a zero/nonzero truth rule when used alone. A
 leading `+` or `-` is accepted. Used alone, `-0`, `+0`, and `0` are false,
@@ -108,8 +116,13 @@ and `0 == +0` are true. Magnitudes are arbitrary-length digit strings, not
 fixed-width numbers.
 
 `true` and `false` are accepted case-insensitively. Relational operators
-(`<`, `>`, `<=`, `>=`, and word forms) apply to numeric content operands only,
-not to bare-name definedness operands.
+(`<`, `>`, `<=`, `>=`, and the word forms `LT`, `LTE`, `GT`, and `GTE`)
+compare decimal integer operands. A relational operator on bare names is a
+diagnostic (`bare names only support == and != comparisons`). When the two
+sides are not both decimal integers, the comparison is false and does not
+diagnose, so a forward reference can become numeric on a later pass.
+`@TEXT <= @TEXT` is false when `TEXT` expands to `abc`, and the process
+exits 0. `==`, `!=`, `EQ`, and `NEQ` still compare those trimmed strings.
 
 The supported operators, from lowest to highest precedence, are:
 
@@ -125,8 +138,11 @@ The supported operators, from lowest to highest precedence, are:
 Operators are case-insensitive when written as words. `!` may be written with
 or without a following space. `NOT` is recognized only when a space character
 follows the word, so `NOT(YES)` is an invalid token. All operands are
-evaluated; logical operators do not short-circuit. Malformed expressions
-produce source diagnostics rather than silently choosing a branch.
+evaluated; logical operators do not short-circuit. Malformed expressions,
+including a bare name compared with a value and a relational operator on
+bare names, produce source diagnostics rather than silently choosing a
+branch. A non-numeric relational comparison is not that case: it is false,
+as described above.
 
 Macro definitions are retained across bounded repeated passes, allowing
 forward references in ordinary text and conditions. Every pass processes the
@@ -162,14 +178,19 @@ characters do not end a literal. An unclosed quoted literal is an error.
 ## Other directives and output
 
 `.error "message"` stops processing and reports the message as an error.
-`.message "message"` writes a message to standard error and continues.
+`.message "message"` writes `{path}:{line}: message: {text}` to standard
+error and continues. That line has no `cmacros:` prefix, no column, and no
+`CMACRO` code, so it is not one of the diagnostics in
+[Diagnostics](DIAGNOSTICS.md).
 Unknown dot-prefixed text is preserved as ordinary output.
 
 Input is fully processed before any result is written. When no input path is
 given, or the path is `-`, the source is standard input (even with `-o`).
-Standard output is empty on a processing error unless writing the completed
-result there. For a real `-o` path, a sibling temporary file is written and
-renamed into place only after success; a pre-existing output is not touched
-when source processing fails. `-o -` means standard output. Text is preserved
+Standard output stays empty when processing fails, whether the destination
+is the default or `-o -`. For a real `-o` path, the result is written to
+the sibling `{path}.cmacros.tmp` and renamed into place only after success. A
+pre-existing output is not touched when source processing fails. If
+`{path}.cmacros.tmp` already exists, replacement is refused and both files
+are left unchanged. `-o -` means standard output. Text is preserved
 as UTF-8. LF bytes are retained. A CR byte is retained except where a stripped
 comment drops it, as described above.

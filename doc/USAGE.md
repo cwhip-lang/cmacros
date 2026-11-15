@@ -32,8 +32,12 @@ resolved and `path.txt` is a file, that file is read instead. This is the same
 `.txt` suffix `.import` and `.include` try. If neither file can be opened, the
 diagnostic is `CMACRO2000`, exit status 1, with no source location. `-I DIR`
 adds import directories in the order supplied; a colon-separated value is also
-accepted. `-D NAME[=VALUE]` defines a macro before reading the input; an
-omitted value is empty. `-o FILE` stages output beside the destination and
+accepted. `-D NAME[=VALUE]` defines a zero-parameter function-like macro
+before the input is read, the same form as `.define NAME() {VALUE}`. An
+omitted value is an empty body. `@NAME` and `@NAME()` both expand it, and
+`@NAME()` consumes the parentheses. A later object-like
+`.define NAME {VALUE}` is `CMACRO1001` even when the body text matches.
+`-o FILE` stages output beside the destination and
 replaces it only after successful processing. Without `-o`, or with `-o -`,
 the completed result is written to standard output. `-` as an output path means
 stdout and cannot name a real file. `-k` / `--keep-comments` leaves `//` and
