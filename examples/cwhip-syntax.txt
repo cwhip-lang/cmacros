@@ -1,11 +1,27 @@
-.define ACTION {int64<int64>}
-.define RESULT(value) {return(@value)}
+# examples/cwhip-syntax.cw — generated sample of current Cwhip syntax.
+#
+# Created: 2026-10-24
+# Author: chuck
+#
+# Changelog:
+#   2026-10-24  Initial file.
+#   2026-11-15  Apply the shared Cwhip coding standard.
+.define ACTION {int64<int64>}.define RESULT(value) {return(@value)}
+# Worker stores a base and adds a value to it.
+#
+# base stays above public:, so only the class can read it.
+# add stays public because start calls it.
 class Worker {
     int64 base = 40
     public:
-    int64 add(int64 value) {
-        @RESULT(base + value)
-    }
+    int64 add(int64 value)
+}
+
+# Add value to the worker base.
+#
+# value is the signed amount to add. Returns base plus value.
+int64 Worker.add(int64 value) {
+    @RESULT(base + value)
 }
 
 start {
@@ -30,10 +46,15 @@ start {
     }
     if (callback == 0) {
         raise(Exception("wrong branch"))
-    } else (mask & 1 == 1 and fraction > 0.0) {
+    }
+    else (mask & 1 == 1 and fraction > 0.0) {
         print("{}\n", action(native))
-    } else {
+    }
+    else {
         raise(Exception("bitwise precedence changed"))
     }
-    print("{}\n", (values["answer"] as int64) + (items[0] as int64))
+    print(
+            "{}\n",
+            (values["answer"] as int64)
+            + (items[0] as int64))
 }
