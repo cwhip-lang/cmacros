@@ -67,7 +67,9 @@ containing the directive, then in `-I` directories, then in directories from
 `MACRO_PATH`. The environment variable and `-I` use colon-separated
 directories. If an exact candidate is absent, a `.txt` suffix is tried.
 Search order is stable; the current directory as an independent search path,
-the shell `PATH`, and recursive directory scans are not used. Canonical paths
+the shell `PATH`, and recursive directory scans are not used. The positional
+CLI input uses that same suffix when the given path cannot be resolved; see
+[Command-line usage](USAGE.md). Canonical paths
 are tracked to reject direct and indirect import cycles.
 
 ## Conditionals
@@ -86,13 +88,25 @@ Conditional operands follow this matrix:
 
 | Form | Meaning |
 | --- | --- |
-| `NAME` | true when `NAME` is defined (even if the replacement is empty) |
-| `@NAME` / `@NAME(args)` | true when `NAME` is defined and its expansion is nonempty |
+| `NAME` | true when `NAME` is defined (even if the replacement is empty or only whitespace) |
+| `@NAME` / `@NAME(args)` | true when `NAME` is defined and its expansion is nonempty after trimming leading and trailing ASCII whitespace |
 | `NAME == OTHER` / `!=` | true when both names have the same definedness |
-| `@A == @B` / `!=` | compares expanded text; if both sides are decimal integers, compares them numerically |
+| `@A == @B` / `!=` | compares trimmed expansions; if both sides are decimal integers, compares those digit strings |
 | mixed `@` and bare name in one comparison | hard error |
 
-Decimal integer literals use a zero/nonzero truth rule when used alone.
+ASCII whitespace here is space, tab, and the bytes from vertical tab through
+carriage return. A replacement of only that whitespace is true as a bare name
+and false as `@NAME`.
+
+Decimal integer literals use a zero/nonzero truth rule when used alone. A
+leading `+` or `-` is accepted. Used alone, `-0`, `+0`, and `0` are false,
+because the zero check keeps one leading sign and then requires every
+remaining digit to be `0`. If the left operand begins with `-` and the right
+operand does not, the left operand is less, including when both magnitudes
+are zero. `-0 == 0` and `-0 == +0` are false, and `-0 < 0` is true. `-0 == -0`
+and `0 == +0` are true. Magnitudes are arbitrary-length digit strings, not
+fixed-width numbers.
+
 `true` and `false` are accepted case-insensitively. Relational operators
 (`<`, `>`, `<=`, `>=`, and word forms) apply to numeric content operands only,
 not to bare-name definedness operands.
@@ -108,25 +122,35 @@ The supported operators, from lowest to highest precedence, are:
 | unary | `!`, `NOT` |
 | grouping | `( expression )` |
 
-Operators are case-insensitive when written as words. All operands are
+Operators are case-insensitive when written as words. `!` may be written with
+or without a following space. `NOT` is recognized only when a space character
+follows the word, so `NOT(YES)` is an invalid token. All operands are
 evaluated; logical operators do not short-circuit. Malformed expressions
 produce source diagnostics rather than silently choosing a branch.
 
 Macro definitions are retained across bounded repeated passes, allowing
 forward references in ordinary text and conditions. Every pass processes the
-original input and imported source snapshot. Processing stops only after two
-successive outputs match and the latest pass added no definitions. Thus an
-unchanged output does not hide a newly defined name that may select a branch
-on the next pass. Definitions made in a selected body or imported file
-participate in later passes.
+original input and imported source snapshot. The first successful pass always
+runs again. A later pass stops when its output string equals the previous
+pass and the number of definitions is unchanged. That number is the length of
+the macro table. Defining one name and undefining another leaves the length
+unchanged, so matching output stops before another pass can see the new name.
+A pass whose output changes, or whose definition count changes in either
+direction, continues.
+Definitions made in a selected body or imported file participate in later
+passes that run.
 
 ## Comments, strings, and escapes
 
-During text expansion, outside quoted literals, `//` comments run to (but do
-not consume) the next line feed. `/* ... */` comments are replaced by one
-space; any line feeds inside a block comment are preserved. An unterminated
-block comment is an error. With `-k` / `--keep-comments`, those comment forms
-are left in the output unchanged; recognition is not language-context
+During text expansion, outside quoted literals, a `//` comment extends through
+the bytes before the next line feed. The line feed itself stays in the output.
+When comments are stripped, carriage returns in that span are dropped, so a
+CRLF ending becomes LF. A `/* ... */` comment
+is replaced by one space. Each line feed inside the block is copied; carriage
+returns inside it are dropped. An unterminated block comment is an error. With
+`-k` / `--keep-comments`, both forms are copied unchanged, including carriage
+returns, so a CRLF ending on a `//` comment stays CRLF and a block comment
+keeps the carriage returns inside it. Recognition is not language-context
 sensitive beyond the existing quoted-literal rules.
 
 Single- and double-quoted literals protect comment openers and directive
@@ -147,4 +171,5 @@ Standard output is empty on a processing error unless writing the completed
 result there. For a real `-o` path, a sibling temporary file is written and
 renamed into place only after success; a pre-existing output is not touched
 when source processing fails. `-o -` means standard output. Text is preserved
-as UTF-8, with CRLF/LF line endings retained.
+as UTF-8. LF bytes are retained. A CR byte is retained except where a stripped
+comment drops it, as described above.

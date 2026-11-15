@@ -26,7 +26,11 @@ cmacros -k source.c
 
 `input` is optional. When omitted, or when it is `-`, source text is read from
 standard input (including when `-o` selects an output file). A real input path
-and `-` are mutually exclusive because only one input may be given. `-I DIR`
+and `-` are mutually exclusive because only one input may be given. A
+positional path that exists is read as that file. When the path cannot be
+resolved and `path.txt` is a file, that file is read instead. This is the same
+`.txt` suffix `.import` and `.include` try. If neither file can be opened, the
+diagnostic is `CMACRO2000`, exit status 1, with no source location. `-I DIR`
 adds import directories in the order supplied; a colon-separated value is also
 accepted. `-D NAME[=VALUE]` defines a macro before reading the input; an
 omitted value is empty. `-o FILE` stages output beside the destination and
