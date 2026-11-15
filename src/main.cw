@@ -1,15 +1,38 @@
+/*
+ * src/main.cw — Command line for the cmacros processor.
+ *
+ * Created: 2026-10-17
+ * Author: chuck
+ *
+ * Changelog:
+ *   2026-10-17  Initial file.
+ *   2026-11-15  Apply the shared Cwhip coding standard.
+ */
+
 import system as Sys
 import cli as Cli
 
 include "types.cw"
 include "processor.cw"
+include "scan.cw"
+include "definitions.cw"
+include "imports.cw"
+include "arguments.cw"
+include "literals.cw"
+include "delimiters.cw"
+include "expand.cw"
+include "condition_lex.cw"
+include "condition_value.cw"
 include "conditions.cw"
 include "io.cw"
 
 start {
     Sys.Process process = Sys.Process()
     Sys.StandardIO io = Sys.System().io()
-    Cli.CommandLine commandLine = Cli.CommandLine("cmacros", "Cwhip macro processor", "1.0")
+    Cli.CommandLine commandLine = Cli.CommandLine(
+            "cmacros",
+            "Cwhip macro processor",
+            "1.0")
     Cli.Option help = Cli.Option()
     help.shortName = "h"
     help.longName = "help"
@@ -70,10 +93,13 @@ start {
     String problem = ""
     try {
         commandLine.parseArgv()
-    } except() as error {
+    }
+    except() as error {
         problem = format("{}", error)
         if (problem.startsWith("unknown option: ")) {
-            problem = format("unknown option '{}'", problem[16..problem.length - 1])
+            problem = format(
+                    "unknown option '{}'",
+                    problem[16..problem.length - 1])
         }
         if (problem.startsWith("option --ofile requires")) {
             problem = "option --ofile requires a file name"
@@ -81,21 +107,25 @@ start {
         if (problem.startsWith("option -o requires")) {
             problem = "option -o requires a file name"
         }
-        if (problem.startsWith("option --include requires") or problem.startsWith("option -I requires")) {
+        if (problem.startsWith("option --include requires")
+                or problem.startsWith("option -I requires")) {
             problem = "option -I requires a directory"
         }
-        if (problem.startsWith("option --define requires") or problem.startsWith("option -D requires")) {
+        if (problem.startsWith("option --define requires")
+                or problem.startsWith("option -D requires")) {
             problem = "option -D requires a definition"
         }
-        if (problem.startsWith("option --verbosity requires") or problem.startsWith("option -v requires")) {
+        if (problem.startsWith("option --verbosity requires")
+                or problem.startsWith("option -v requires")) {
             problem = "option -v requires a non-negative number"
         }
         if (problem.startsWith("unexpected positional")) {
             problem = "only one input file may be specified"
         }
     }
+
     if (commandLine.currentAction() == Cli.Action().HELP) {
-        Processor([]).printHelp()
+        Processor([]).print_help()
         process.exit(0)
     }
     if (commandLine.currentAction() == Cli.Action().VERSION) {
@@ -135,32 +165,39 @@ start {
     }
     Processor processor = Processor(paths)
     processor.keepComments = commandLine.switchValue("keep-comments")
+
     if (fromStdin) {
         String content = ""
-        String chunk = io.read(65536)
+        String chunk = io.read(Processor.LIMIT_READ_CHUNK)
         while (chunk.length > 0) {
             content.append(chunk)
-            if (content.length > 16777216) {
-                io.writeErrorLine("cmacros: error[CMACRO2001]: input exceeds the 16 MiB source limit")
+            if (content.length > Processor.LIMIT_SOURCE_BYTES) {
+                io.writeErrorLine(
+                        "cmacros: error[CMACRO2001]: input exceeds the 16 MiB source limit")
                 process.exit(1)
             }
-            chunk = io.read(65536)
+            chunk = io.read(Processor.LIMIT_READ_CHUNK)
         }
         input = "<stdin>"
-        processor.cacheSource(input, content)
-    } else {
+        processor.cache_source(input, content)
+    }
+    else {
         String absoluteInput = Sys.FileSystem().absolutePath(input)
-        if (absoluteInput.length == 0 and Sys.FileSystem().isFile(format("{}.txt", input))) {
+        if (absoluteInput.length == 0
+                and Sys.FileSystem().isFile(format("{}.txt", input))) {
             input = format("{}.txt", input)
         }
         if (absoluteInput.length > 0) {
             input = absoluteInput
         }
         if (not Sys.FileSystem().isFile(input)) {
-            io.writeErrorLine(format("cmacros: error[CMACRO2000]: cannot open input '{}'", input))
+            io.writeErrorLine(format(
+                    "cmacros: error[CMACRO2000]: cannot open input '{}'",
+                    input))
             process.exit(1)
         }
     }
+
     int64 definitionIndex = 0
     while (definitionIndex < definitions.length) {
         String definition = definitions[definitionIndex] as String
@@ -168,16 +205,25 @@ start {
         String name = definition
         String body = ""
         if (equals >= 0) {
-            name = ByteSpan().byteSpan(definition, 0, equals)
-            body = ByteSpan().byteSpan(definition, equals + 1, definition.length)
+            name = ByteSpan().byte_span(definition, 0, equals)
+            body = ByteSpan().byte_span(definition, equals
+                    + 1, definition.length)
         }
         list noParameters = []
-        processor.addDefinition(name, body, "<command line>", 1, 1, noParameters, true)
+        processor.add_definition(
+                name,
+                body,
+                "<command line>",
+                1,
+                1,
+                noParameters,
+                true)
         definitionIndex = definitionIndex + 1
     }
+
     String result = processor.process(input)
     if (not processor.failed) {
-        processor.writeOutput(outputPath, result)
+        processor.write_output(outputPath, result)
     }
     if (processor.failed) {
         process.exit(1)
