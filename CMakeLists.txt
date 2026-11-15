@@ -67,6 +67,19 @@ cwhip_add_program(cmacros
 get_target_property(cmacros_executable cmacros CWHIP_EXECUTABLE)
 install(PROGRAMS "${cmacros_executable}" DESTINATION bin)
 
+# make format, after a normal configure. The tool reads the root
+# .cwhip-format from the source directory. Availability is checked when
+# the target runs, not at configure time.
+add_custom_target(format
+    COMMAND "${CMAKE_COMMAND}"
+        "-DCMACROS_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+        "-DCMACROS_BINARY_DIR=${CMAKE_BINARY_DIR}"
+        -P "${PROJECT_SOURCE_DIR}/cmake/format.cmake"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMENT "Formatting Cwhip sources with cwhip-format"
+    USES_TERMINAL
+    VERBATIM)
+
 if(BUILD_TESTING)
     add_test(NAME cmacros-sdk-discovery
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/test_sdk_discovery.py"
@@ -83,4 +96,7 @@ if(BUILD_TESTING)
     add_test(NAME cmacros-install-relocation
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/test_install.py"
             "${CMAKE_COMMAND}" "${CMAKE_BINARY_DIR}" "$<CONFIG>")
+    add_test(NAME cmacros-format-target
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/test_format_target.py"
+            "${CMAKE_COMMAND}")
 endif()

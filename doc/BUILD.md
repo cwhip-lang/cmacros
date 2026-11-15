@@ -160,6 +160,21 @@ Run the isolated SDK discovery regressions without an installed SDK using
 `python3 tests/test_sdk_discovery.py`. These cover the helper, CMake selection
 and cache handling, and project-shell setup without touching user configuration.
 
+## Format
+
+From the build directory, `make format` rewrites the checkout's `*.cw` files
+in place. The target runs `cwhip-format -i` with the repository root as its
+working directory, so the tool reads the root `.cwhip-format`. Paths under
+the CMake build directory, and under the checkout's `build` directory, are
+not passed to the tool. `cwhip-format` must be on `PATH`; the project shell
+adds the selected SDK's `bin` directory. If the tool is missing, `make format`
+fails and the message names `cwhip-format`. Configuration does not require it.
+
+```sh
+# In the project shell, from build/:
+make format
+```
+
 ## Install and relocate
 
 ```sh
