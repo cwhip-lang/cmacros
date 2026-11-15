@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Document command-line defines, per-directory `.txt` import lookup, condition
+  whitespace and comparisons, `.message` lines, and import and output failure
+  locations as the processor implements them. Record
+  `NewlineBeforeCloseBrace` in `.cwhip-format` so that dump matches the
+  formatter defaults in `doc/CODING.md`.
 - Add a `format` target that runs `cwhip-format -i` on the checkout's `*.cw`
   files and skips the build directory.
 - Route argv parsing through the SDK `cli` 0.1.0 package while keeping the

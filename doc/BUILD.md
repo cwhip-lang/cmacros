@@ -36,9 +36,15 @@ than `0` and `+0`. A lone `-0` is still false. See the
 [language reference](LANGUAGE.md).
 
 The build uses Cwhip's `cwhip_add_program` and its static runtime. Macro
-processing is split across `src/main.cw` (CLI/`start`), `src/types.cw`,
-`src/processor.cw`, `src/conditions.cw`, and `src/io.cw`; Python is used only
-as the test driver and for safe TOML configuration parsing.
+processing is split across `src/main.cw` (CLI/`start`) and the units it
+includes: `src/types.cw`, `src/processor.cw`, `src/scan.cw`,
+`src/definitions.cw`, `src/imports.cw`, `src/arguments.cw`,
+`src/literals.cw`, `src/delimiters.cw`, `src/expand.cw`,
+`src/condition_lex.cw`, `src/condition_value.cw`, `src/conditions.cw`, and
+`src/io.cw`. Expansion is in `src/expand.cw`, import lookup is in
+`src/imports.cw`, and the definition table is in `src/definitions.cw`.
+Python is used only as the test driver and for safe TOML configuration
+parsing.
 
 ## SDK discovery
 
