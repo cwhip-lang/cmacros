@@ -1,5 +1,6 @@
 // Shared cmacros types.
 class Macro {
+    public:
     String name
     String body
     String file
@@ -22,6 +23,7 @@ class Macro {
 }
 
 class Arguments {
+    public:
     list values
     int64 end
     bool valid
@@ -34,6 +36,7 @@ class Arguments {
 }
 
 class Operator {
+    public:
     int64 index
     String name
 
@@ -44,6 +47,7 @@ class Operator {
 }
 
 class LiteralValue {
+    public:
     String value
     int64 end
     bool valid
@@ -56,6 +60,7 @@ class LiteralValue {
 }
 
 class ByteSpan {
+    public:
     int64 byteSpanBound(int64 value, int64 length) {
         int64 index = value
         if (index < 0) { index = index + length }
