@@ -21,9 +21,14 @@ unexpected or cleanup failures. `cmacros` currently uses:
 
 | Code(s) | Meaning |
 | --- | --- |
-| 0001 | Usage, missing input, or invalid command-line option |
+| 0001 | Argv parse failure or more than one positional input |
 | 1000-1009 | Invalid directive/definition (including `.undef` of an unknown name), expansion depth or cycle, `.error`, macro call/arity, malformed conditional (including mixed `@`/bare comparisons), or misplaced `.else` |
 | 2000-2009 | Input/output failure, source/work/import/output limits, import lookup/cycle, or non-convergent passes |
+
+`CMACRO0001` exits 2. It covers argv parse failures and more than one
+positional argument. Omitting the input reads standard input; that is not
+`CMACRO0001`. A positional path that cannot be opened, including after the
+`.txt` suffix step, is `CMACRO2000` and exits 1, with no source location.
 
 The implementation has no subprocess or transport phase, so 3000-3999 is
 reserved. No current `cmacros` path allocates codes in 9000-9999; that range

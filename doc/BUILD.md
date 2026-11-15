@@ -20,15 +20,20 @@ Updating the Cwhip source alone does not update an installed SDK: rebuild and
 reinstall an updated Cwhip SDK at the prefix named
 in the configuration error, or point `CWHIP_SDK` at an updated installation,
 then rerun configuration. cmacros rejects the selected older SDK rather than
-silently falling back or skipping application defaults. The migration depends
-on [cwhip-lang/cwhip#25](https://github.com/cwhip-lang/cwhip/pull/25) and the numeric SDK
-migration; rebuild the SDK and its native packages together. Any rebuilt package
+silently falling back or skipping application defaults. Rebuild the SDK and
+its native packages together. Configuration requires Cwhip 0.0.2 and
+`Cwhip_SDK_ABI=numeric-v2`, described in the
+[numeric SDK migration](https://github.com/cwhip-lang/cwhip/blob/master/doc/NUMERIC-MIGRATION.md).
+Any rebuilt package
 manifest must declare `sdk-abi = "numeric-v2"` under `[package]`. cmacros itself
 is an application and does not publish an SDK package manifest.
 
 Implementation offsets, counters, and byte conversions use `int64`. The macro
-input language is unchanged: decimal condition operands are still compared as
-arbitrary-length signed integers, not converted to a fixed-width Cwhip number.
+input language is unchanged: decimal condition operands stay arbitrary-length
+digit strings, not fixed-width Cwhip numbers. A leading `-` compares less than
+an operand with no `-`, even when both magnitudes are zero, so `-0` is less
+than `0` and `+0`. A lone `-0` is still false. See the
+[language reference](LANGUAGE.md).
 
 The build uses Cwhip's `cwhip_add_program` and its static runtime. Macro
 processing is split across `src/main.cw` (CLI/`start`), `src/types.cw`,
