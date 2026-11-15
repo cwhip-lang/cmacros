@@ -1,5 +1,6 @@
 // Macro processor core.
 class Processor {
+    public:
     list macros
     list includePaths
     list cachedPaths
