@@ -2,6 +2,7 @@
 
 class Worker {
     int64 base = 40
+    public:
     int64 add(int64 value) {
         return(base + value)
     }
