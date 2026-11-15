@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a `format` target that runs `cwhip-format -i` on the checkout's `*.cw`
+  files and skips the build directory.
 - Route argv parsing through the SDK `cli` 0.1.0 package while keeping the
   custom `--help` / `--version` text and CMACRO0001 usage diagnostics.
 - Read source bytes with `text[index]` and copy half-open spans through an
